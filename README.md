@@ -2,7 +2,7 @@
 Pytorch implementation of Generative Adversarial Networks (GAN) for MNIST dataset.
 
 ## Resutls
-
+(MNIST_GAN_results/generation_animation.gif?raw=true)
 
 ## Development Environment
 * Ubuntu 14.04 LTS
