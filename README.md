@@ -1,6 +1,5 @@
 # pytorch-MNIST-GAN
 Pytorch implementation of Generative Adversarial Networks (GAN) for MNIST dataset.
-Full paper: 
 
 ## Resutls
 * Generate using fixed noise (fixed_z_)
