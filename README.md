@@ -25,6 +25,7 @@ Full paper:
 ![Loss](MNIST_GAN_results/MNIST_GAN_train_hist.png)
 
 ## Development Environment
+
 * Ubuntu 14.04 LTS
 * Python 2.7.6
 * cuda 8.0
@@ -34,5 +35,7 @@ Full paper:
 * imageio 2.2.0
 
 ## Reference
+
 Goodfellow, Ian, et al. "Generative adversarial nets." Advances in neural information processing systems. 2014.
+
 (Full paper: http://papers.nips.cc/paper/5423-generative-adversarial-nets.pdf)
