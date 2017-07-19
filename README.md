@@ -52,7 +52,9 @@ Pytorch implementation of Generative Adversarial Networks (GAN) [1] and Deep Con
 ## Reference
 
 [1] Goodfellow, Ian, et al. "Generative adversarial nets." Advances in neural information processing systems. 2014.
+
 (Full paper: http://papers.nips.cc/paper/5423-generative-adversarial-nets.pdf)
 
 [2] Radford, Alec, Luke Metz, and Soumith Chintala. "Unsupervised representation learning with deep convolutional generative adversarial networks." arXiv preprint arXiv:1511.06434 (2015).
+
 (Full paper: https://arxiv.org/pdf/1511.06434.pdf)
