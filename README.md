@@ -1,9 +1,19 @@
 # pytorch-MNIST-GAN-DCGAN
-Pytorch implementation of Generative Adversarial Networks (GAN) and Deep Convolutional Generative Adversarial Networks (DCGAN) for MNIST dataset.
+Pytorch implementation of Generative Adversarial Networks (GAN) [1] and Deep Convolutional Generative Adversarial Networks (DCGAN) [2] for MNIST dataset.
 
 ## Resutls
 * Generate using fixed noise (fixed_z_)
 
+<table align='center'>
+<tr align='center'>
+<td> GAN</td>
+<td> DCGAN</td>
+</tr>
+<tr>
+<td>![Generation](MNIST_GAN_results/generation_animation.gif?raw=true)</td>
+<td><img src = 'MNIST_GAN_results/MNIST_GAN_100.png'>
+</tr>
+</table>
 ![Generation](MNIST_GAN_results/generation_animation.gif?raw=true)
 
 * MNIST vs Generated images
@@ -11,7 +21,8 @@ Pytorch implementation of Generative Adversarial Networks (GAN) and Deep Convolu
 <table align='center'>
 <tr align='center'>
 <td> MNIST </td>
-<td> Generated images </td>
+<td> GAN after 100 epochs </td>
+<td> DCGAN after 20 epochs </td>
 </tr>
 <tr>
 <td><img src = 'MNIST_GAN_results/raw_MNIST.png'>
@@ -20,10 +31,12 @@ Pytorch implementation of Generative Adversarial Networks (GAN) and Deep Convolu
 </table>
 
 * Training loss
-
+  * GAN
 ![Loss](MNIST_GAN_results/MNIST_GAN_train_hist.png)
 
 * Learning Time
+  * DCGAN - Avg. per epoch: 197.86 sec; 
+>> if you want to learning speed up, you change 'generator(128)' and 'discriminator(128)' to 'generator(64)' and discriminator(64) ... then Avg. per epoch: about 67sec in my development environment.
 
 ## Development Environment
 
