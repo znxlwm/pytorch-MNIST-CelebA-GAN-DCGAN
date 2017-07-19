@@ -247,7 +247,7 @@ end_time = time.time()
 total_ptime = end_time - start_time
 train_hist['total_ptime'].append(total_ptime)
 
-print("Avg one epoch ptime: %.2f, total %d epochs ptime: %.2f" % (torch.mean(torch.FloatTensor(train_hist['per_epoch_ptimes'])), train_epoch, total_ptime))
+print("Avg per epoch ptime: %.2f, total %d epochs ptime: %.2f" % (torch.mean(torch.FloatTensor(train_hist['per_epoch_ptimes'])), train_epoch, total_ptime))
 print("Training finish!... save training results")
 torch.save(G.state_dict(), "MNIST_DCGAN_results/generator_param.pkl")
 torch.save(D.state_dict(), "MNIST_DCGAN_results/discriminator_param.pkl")
