@@ -35,7 +35,7 @@ Pytorch implementation of Generative Adversarial Networks (GAN) [1] and Deep Con
 ![Loss](MNIST_GAN_results/MNIST_GAN_train_hist.png)
 
 * Learning Time
-  * DCGAN - Avg. per epoch: 197.86 sec; (if you want to reduce learning tiem, you change 'generator(128)' and 'discriminator(128)' to 'generator(64)' and discriminator(64) ... then Avg. per epoch: about 67sec in my development environment.)
+  * DCGAN - Avg. per epoch: 197.86 sec; (if you want to reduce learning time, you can change 'generator(128)' and 'discriminator(128)' to 'generator(64)' and discriminator(64) ... then Avg. per epoch: about 67sec in my development environment.)
 
 ## Development Environment
 
