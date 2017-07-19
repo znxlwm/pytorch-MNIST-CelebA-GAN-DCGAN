@@ -14,6 +14,7 @@ Pytorch implementation of Generative Adversarial Networks (GAN) [1] and Deep Con
 <td><img src = 'MNIST_GAN_results/MNIST_GAN_100.png'>
 </tr>
 </table>
+
 ![Generation](MNIST_GAN_results/generation_animation.gif?raw=true)
 
 * MNIST vs Generated images
