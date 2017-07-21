@@ -1,11 +1,12 @@
 # pytorch-MNIST-GAN-DCGAN
 Pytorch implementation of Generative Adversarial Networks (GAN) [1] and Deep Convolutional Generative Adversarial Networks (DCGAN) [2] for MNIST [3] and CelebA [4] datasets.
 
-* you can download 
-- MNIST dataset here:http://yann.lecun.com/exdb/mnist/
-- CelebA dataset here: http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
+* you can download
+  - MNIST dataset: http://yann.lecun.com/exdb/mnist/
+  - CelebA dataset: http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
 
-* CelebA DCGAN requires 64 x 64 size image, so you have to resize CelebA dataset (celebA_data_preprocess.py)
+* pytorch_CelebA_DCGAN.py requires 64 x 64 size image, so you have to resize CelebA dataset (celebA_data_preprocess.py).
+* pytorch_CelebA_DCGAN.py added learning rate decay code.
 
 ## Resutls
 ### MNIST
@@ -42,7 +43,7 @@ Pytorch implementation of Generative Adversarial Networks (GAN) [1] and Deep Con
 ![Loss](MNIST_GAN_results/generation_animation.gif)
 
 * Learning Time
-  * DCGAN - Avg. per epoch: 197.86 sec; (if you want to reduce learning time, you can change 'generator(128)' and 'discriminator(128)' to 'generator(64)' and 'discriminator(64)' ... then Avg. per epoch: about 67sec in my development environment.)
+  * MNIST DCGAN - Avg. per epoch: 197.86 sec; (if you want to reduce learning time, you can change 'generator(128)' and 'discriminator(128)' to 'generator(64)' and 'discriminator(64)' ... then Avg. per epoch: about 67sec in my development environment.)
   
 ### CelebA
 * Generate using fixed noise (fixed_z_)
@@ -61,6 +62,9 @@ Pytorch implementation of Generative Adversarial Networks (GAN) [1] and Deep Con
 <td><img src = 'CelebA_DCGAN_results/CelebA_DCGAN_20.png'>
 </tr>
 </table>
+
+* Learning Time
+  * CelebA DCGAN - Avg. per epoch: 732.54 sec; total 20 epochs ptime: 14744.66 sec
 
 ## Development Environment
 
