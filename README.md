@@ -1,4 +1,4 @@
-# pytorch-MNIST-GAN-DCGAN
+# pytorch-MNIST-CelebA-GAN-DCGAN
 Pytorch implementation of Generative Adversarial Networks (GAN) [1] and Deep Convolutional Generative Adversarial Networks (DCGAN) [2] for MNIST [3] and CelebA [4] datasets.
 
 * you can download
