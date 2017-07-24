@@ -70,9 +70,9 @@ class discriminator(nn.Module):
         return x
 
 def normal_init(m, mean, std):
-    if isinstance(m, nn.Linear):
-        nn.init.normal(m.weight.data, mean=mean, std=std)
-        nn.init.normal(m.bias.data, mean=mean, std=std)
+    if isinstance(m, nn.ConvTranspose2d) or isinstance(m, nn.Conv2d):
+        m.weight.data.normal_(mean, std)
+        m.bias.data.zero_()
 
 fixed_z_ = torch.randn((5 * 5, 100)).view(-1, 100, 1, 1)    # fixed noise
 fixed_z_ = Variable(fixed_z_.cuda(), volatile=True)
@@ -151,8 +151,8 @@ train_loader = torch.utils.data.DataLoader(
 # network
 G = generator(128)
 D = discriminator(128)
-G.weight_init(mean=0, std=0.02)
-D.weight_init(mean=0, std=0.02)
+G.weight_init(mean=0.0, std=0.02)
+D.weight_init(mean=0.0, std=0.02)
 G.cuda()
 D.cuda()
 
