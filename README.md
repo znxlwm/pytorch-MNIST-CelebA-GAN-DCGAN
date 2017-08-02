@@ -56,10 +56,12 @@ Pytorch implementation of Generative Adversarial Networks (GAN) [1] and Deep Con
 <tr align='center'>
 <td> CelebA </td>
 <td> DCGAN after 20 epochs </td>
+<td> DCGAN crop after 30 epochs </td>
 </tr>
 <tr>
 <td><img src = 'CelebA_DCGAN_results/raw_CelebA.png'>
 <td><img src = 'CelebA_DCGAN_results/CelebA_DCGAN_20.png'>
+<td><img src = 'CelebA_DCGAN_crop_results/CelebA_DCGAN_crop_30.png'>
 </tr>
 </table>
 
