@@ -139,6 +139,18 @@ train_epoch = 20
 
 # data_loader
 img_size = 64
+isCrop = False
+if isCrop:
+    transform = transforms.Compose([
+        transforms.Scale(108),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+    ])
+else:
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+    ])
 transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
@@ -203,6 +215,9 @@ for epoch in range(train_epoch):
     for x_, _ in train_loader:
         # train discriminator D
         D.zero_grad()
+        
+        if isCrop:
+            x_ = x_[:, :, 22:86, 22:86]
 
         mini_batch = x_.size()[0]
 
