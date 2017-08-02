@@ -50,7 +50,16 @@ Pytorch implementation of Generative Adversarial Networks (GAN) [1] and Deep Con
 ### CelebA
 * Generate using fixed noise (fixed_z_)
 
-![CelebA](CelebA_DCGAN_results/generation_animation.gif)
+<table align='center'>
+<tr align='center'>
+<td> DCGAN </td>
+<td> DCGAN crop </td>
+</tr>
+<tr>
+<td><img src = 'CelebA_DCGAN_results/generation_animation.gif'>
+<td><img src = 'CelebA_DCGAN_crop_results/generation_animation.gif'>
+</tr>
+</table>
 
 * CelebA vs Generated images
 
