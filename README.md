@@ -1,6 +1,8 @@
 # pytorch-MNIST-CelebA-GAN-DCGAN
 Pytorch implementation of Generative Adversarial Networks (GAN) [1] and Deep Convolutional Generative Adversarial Networks (DCGAN) [2] for MNIST [3] and CelebA [4] datasets.
 
+* If you want to train using cropped CelebA dataset, you have to change isCrop = False to isCrop = True.
+
 * you can download
   - MNIST dataset: http://yann.lecun.com/exdb/mnist/
   - CelebA dataset: http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
