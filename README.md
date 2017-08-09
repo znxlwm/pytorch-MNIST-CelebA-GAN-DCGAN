@@ -10,6 +10,16 @@ Pytorch implementation of Generative Adversarial Networks (GAN) [1] and Deep Con
 * pytorch_CelebA_DCGAN.py requires 64 x 64 size image, so you have to resize CelebA dataset (celebA_data_preprocess.py).
 * pytorch_CelebA_DCGAN.py added learning rate decay code.
 
+## Implementation details
+* GAN
+
+![GAN](pytorch_GAN.png)
+
+* DCGAN
+
+![Loss](pytorch_DCGAN.png)
+
+
 ## Resutls
 ### MNIST
 * Generate using fixed noise (fixed_z_)
