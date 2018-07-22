@@ -27,6 +27,7 @@ class generator(nn.Module):
         x = F.tanh(self.fc4(x))
         return x
 
+# D(x)
 class discriminator(nn.Module):
     def __init__(self, input_size=32, n_class=10):
         # Initialisation
@@ -186,6 +187,20 @@ def train_generator(mini_batch_size):
     G_optimizer.step()
     return G_train_loss.item()
 
+def save_models(train_hist):
+    torch.save(G.state_dict(), PATH+"/generator_param_"+str(train_epoch)+".pkl")
+    torch.save(D.state_dict(), PATH +"/discriminator_param_"+str(train_epoch)+".pkl")
+
+    with open(PATH+'/train_hist.pkl', 'wb') as f:
+        pickle.dump(train_hist, f)
+
+def save_gif():
+    images = []
+    for e in range(train_epoch):
+        img_name = PATH+'/Fixed_results/MNIST_GAN_' + str(e + 1) + '.png'
+        images.append(imageio.imread(img_name))
+    imageio.mimsave(PATH+'/generation_animation.gif', images, fps=5)
+
 def train():
     train_hist = {'D_losses':[],'G_losses':[]}
 
@@ -206,24 +221,15 @@ def train():
         fixed_p = PATH+'/Fixed_results/MNIST_GAN_' + str(epoch + 1) + '.png'
         show_result((epoch+1), save=True, path=p, isFix=False)
         show_result((epoch+1), save=True, path=fixed_p, isFix=True)
+
         train_hist['D_losses'].append(torch.mean(torch.FloatTensor(D_losses)))
         train_hist['G_losses'].append(torch.mean(torch.FloatTensor(G_losses)))
 
 
-    print("Training complete. Saving models")
-    torch.save(G.state_dict(), PATH+"/generator_param_"+str(train_epoch)+".pkl")
-    torch.save(D.state_dict(), PATH +"/discriminator_param_"+str(train_epoch)+".pkl")
-
-    with open(PATH+'/train_hist.pkl', 'wb') as f:
-        pickle.dump(train_hist, f)
-
+    print("Training complete. Saving.")
+    save_models(train_hist)
     show_train_hist(train_hist, save=True, path=PATH+'/MNIST_GAN_train_hist.png')
-
-    images = []
-    for e in range(train_epoch):
-        img_name = PATH+'/Fixed_results/MNIST_GAN_' + str(e + 1) + '.png'
-        images.append(imageio.imread(img_name))
-    imageio.mimsave(PATH+'/generation_animation.gif', images, fps=5)
+    save_gif()
 
 if __name__ == '__main__':
     train()
