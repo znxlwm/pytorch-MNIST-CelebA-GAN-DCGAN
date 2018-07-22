@@ -12,33 +12,30 @@ from torch.autograd import Variable
 
 # G(z)
 class generator(nn.Module):
-    # initializers
-    def __init__(self, input_size=32, n_class = 10):
+    def __init__(self, input_size=32, output_size = 10):
+        # Initialisation
         super(generator, self).__init__()
         self.fc1 = nn.Linear(input_size, 256)
         self.fc2 = nn.Linear(self.fc1.out_features, 512)
         self.fc3 = nn.Linear(self.fc2.out_features, 1024)
-        self.fc4 = nn.Linear(self.fc3.out_features, n_class)
+        self.fc4 = nn.Linear(self.fc3.out_features, output_size)
 
-    # forward method
     def forward(self, input):
         x = F.leaky_relu(self.fc1(input), 0.2)
         x = F.leaky_relu(self.fc2(x), 0.2)
         x = F.leaky_relu(self.fc3(x), 0.2)
         x = F.tanh(self.fc4(x))
-
         return x
 
 class discriminator(nn.Module):
-    # initializers
     def __init__(self, input_size=32, n_class=10):
+        # Initialisation
         super(discriminator, self).__init__()
         self.fc1 = nn.Linear(input_size, 1024)
         self.fc2 = nn.Linear(self.fc1.out_features, 512)
         self.fc3 = nn.Linear(self.fc2.out_features, 256)
         self.fc4 = nn.Linear(self.fc3.out_features, n_class)
 
-    # forward method
     def forward(self, input):
         x = F.leaky_relu(self.fc1(input), 0.2)
         x = F.dropout(x, 0.3)
@@ -47,15 +44,14 @@ class discriminator(nn.Module):
         x = F.leaky_relu(self.fc3(x), 0.2)
         x = F.dropout(x, 0.3)
         x = F.sigmoid(self.fc4(x))
-
         return x
 
 fixed_z_ = torch.randn((5 * 5, 100))    # fixed noise
-fixed_z_ = Variable(fixed_z_.cuda(), volatile=True)
+fixed_z_ = Variable(fixed_z_.cuda())
 
 def show_result(num_epoch, show = False, save = False, path = 'result.png', isFix=False):
     z_ = torch.randn((5*5, 100))
-    z_ = Variable(z_.cuda(), volatile=True)
+    z_ = Variable(z_.cuda())
 
     G.eval()
     test_images = G(fixed_z_) if isFix else G(z_)
@@ -111,7 +107,7 @@ def show_train_hist(hist, show = False, save = False, path = 'Train_hist.png'):
 batch_size = 128
 lr = 0.0002
 train_epoch = 100
-
+PATH = './MNIST_GAN_results'
 # data_loader
 transform = transforms.Compose([
     transforms.ToTensor(),
@@ -123,10 +119,8 @@ train_loader = torch.utils.data.DataLoader(
     batch_size=batch_size, shuffle=True)
 
 # network
-G = generator(input_size=100, n_class=28*28)
-D = discriminator(input_size=28*28, n_class=1)
-G.cuda()
-D.cuda()
+G = generator(input_size=100, output_size=28*28).cuda()
+D = discriminator(input_size=28*28, n_class=1).cuda()
 
 # Binary Cross Entropy loss
 BCE_loss = nn.BCELoss()
@@ -136,12 +130,12 @@ G_optimizer = optim.Adam(G.parameters(), lr=lr)
 D_optimizer = optim.Adam(D.parameters(), lr=lr)
 
 # results save folder
-if not os.path.isdir('MNIST_GAN_results'):
-    os.mkdir('MNIST_GAN_results')
-if not os.path.isdir('MNIST_GAN_results/Random_results'):
-    os.mkdir('MNIST_GAN_results/Random_results')
-if not os.path.isdir('MNIST_GAN_results/Fixed_results'):
-    os.mkdir('MNIST_GAN_results/Fixed_results')
+if not os.path.isdir(PATH):
+    os.mkdir(PATH)
+if not os.path.isdir(PATH+'/Random_results'):
+    os.mkdir(PATH+'/Random_results')
+if not os.path.isdir(PATH+'/Fixed_results'):
+    os.mkdir(PATH+'/Fixed_results')
 
 def train_discriminator(input,mini_batch_size):
     D.zero_grad()
@@ -171,28 +165,29 @@ def train_discriminator(input,mini_batch_size):
     # Propogate loss backwards and return loss
     D_train_loss.backward()
     D_optimizer.step()
-
-    return D_train_loss.data[0]
+    return D_train_loss.item()
 
 def train_generator(mini_batch_size):
     G.zero_grad()
 
+    # Generate z with random values
     z = torch.randn((mini_batch_size, 100))
     y = torch.ones(mini_batch_size)     # Attempting to be real
-
     z, y = Variable(z.cuda()), Variable(y.cuda())
+
+    # Calculate loss for generator
+    # Comparing discriminator's prediction with ones (ie, real)
     G_result = G(z)
     D_result = D(G_result)
     G_train_loss = BCE_loss(D_result, y)
+
+    # Propogate loss backwards and return loss
     G_train_loss.backward()
     G_optimizer.step()
-
-    return G_train_loss.data[0]
+    return G_train_loss.item()
 
 def train():
-    train_hist = {}
-    train_hist['D_losses'] = []
-    train_hist['G_losses'] = []
+    train_hist = {'D_losses':[],'G_losses':[]}
 
     for epoch in range(train_epoch):
         D_losses = []
@@ -207,26 +202,28 @@ def train():
 
         print('[%d/%d]: loss_d: %.3f, loss_g: %.3f' % (
             (epoch + 1), train_epoch, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
-        p = 'MNIST_GAN_results/Random_results/MNIST_GAN_' + str(epoch + 1) + '.png'
-        fixed_p = 'MNIST_GAN_results/Fixed_results/MNIST_GAN_' + str(epoch + 1) + '.png'
+        p = PATH+'/Random_results/MNIST_GAN_' + str(epoch + 1) + '.png'
+        fixed_p = PATH+'/Fixed_results/MNIST_GAN_' + str(epoch + 1) + '.png'
         show_result((epoch+1), save=True, path=p, isFix=False)
         show_result((epoch+1), save=True, path=fixed_p, isFix=True)
         train_hist['D_losses'].append(torch.mean(torch.FloatTensor(D_losses)))
         train_hist['G_losses'].append(torch.mean(torch.FloatTensor(G_losses)))
 
 
-    print("Training finish!... save training results")
-    torch.save(G.state_dict(), "MNIST_GAN_results/generator_param.pkl")
-    torch.save(D.state_dict(), "MNIST_GAN_results/discriminator_param.pkl")
-    with open('MNIST_GAN_results/train_hist.pkl', 'wb') as f:
+    print("Training complete. Saving models")
+    torch.save(G.state_dict(), PATH+"/generator_param_"+str(train_epoch)+".pkl")
+    torch.save(D.state_dict(), PATH +"/discriminator_param_"+str(train_epoch)+".pkl")
+
+    with open(PATH+'/train_hist.pkl', 'wb') as f:
         pickle.dump(train_hist, f)
 
-    show_train_hist(train_hist, save=True, path='MNIST_GAN_results/MNIST_GAN_train_hist.png')
+    show_train_hist(train_hist, save=True, path=PATH+'/MNIST_GAN_train_hist.png')
 
     images = []
     for e in range(train_epoch):
-        img_name = 'MNIST_GAN_results/Fixed_results/MNIST_GAN_' + str(e + 1) + '.png'
+        img_name = PATH+'/Fixed_results/MNIST_GAN_' + str(e + 1) + '.png'
         images.append(imageio.imread(img_name))
-    imageio.mimsave('MNIST_GAN_results/generation_animation.gif', images, fps=5)
+    imageio.mimsave(PATH+'/generation_animation.gif', images, fps=5)
 
-train()
+if __name__ == '__main__':
+    train()
