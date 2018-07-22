@@ -52,15 +52,14 @@ class discriminator(nn.Module):
 
 fixed_z_ = torch.randn((5 * 5, 100))    # fixed noise
 fixed_z_ = Variable(fixed_z_.cuda(), volatile=True)
+
 def show_result(num_epoch, show = False, save = False, path = 'result.png', isFix=False):
     z_ = torch.randn((5*5, 100))
     z_ = Variable(z_.cuda(), volatile=True)
 
     G.eval()
-    if isFix:
-        test_images = G(fixed_z_)
-    else:
-        test_images = G(z_)
+    test_images = G(fixed_z_) if isFix else G(z_)
+
     G.train()
 
     size_figure_grid = 5
@@ -115,9 +114,10 @@ train_epoch = 100
 
 # data_loader
 transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+    transforms.ToTensor(),
+    transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
 ])
+
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('data', train=True, download=True, transform=transform),
     batch_size=batch_size, shuffle=True)
@@ -175,8 +175,6 @@ def train_discriminator(input,mini_batch_size):
     return D_train_loss.data[0]
 
 def train_generator(mini_batch_size):
-    """ Train generator
-    """
     G.zero_grad()
 
     z = torch.randn((mini_batch_size, 100))
@@ -203,55 +201,9 @@ def train():
             mini_batch_size = x_.size()[0]
             D_loss = train_discriminator(x_,mini_batch_size)
             D_losses.append(D_loss)
-            # """ Train discriminator
-            # """
-            #
-            # D.zero_grad()
-            #
-            # x_ = x_.view(-1, 28 * 28)
-            #
-            # mini_batch_size = x_.size()[0]
-            #
-            # y_real_ = torch.ones(mini_batch_size)
-            # y_fake_ = torch.zeros(mini_batch_size)
-            #
-            # x_, y_real_, y_fake_ = Variable(x_.cuda()), Variable(y_real_.cuda()), Variable(y_fake_.cuda())
-            # D_result = D(x_)
-            # D_real_loss = BCE_loss(D_result, y_real_)
-            # D_real_score = D_result
-            #
-            # z_ = torch.randn((mini_batch_size, 100))
-            # z_ = Variable(z_.cuda())
-            # G_result = G(z_)
-            #
-            # D_result = D(G_result)
-            # D_fake_loss = BCE_loss(D_result, y_fake_)
-            # D_fake_score = D_result
-            #
-            # D_train_loss = D_real_loss + D_fake_loss
-            #
-            # D_train_loss.backward()
-            # D_optimizer.step()
-            #
-            # D_losses.append(D_train_loss.data[0])
 
             G_loss = train_generator(mini_batch_size)
             G_losses.append(G_loss)
-            # """ Train generator
-            # """
-            # G.zero_grad()
-            #
-            # z_ = torch.randn((mini_batch_size, 100))
-            # y_ = torch.ones(mini_batch_size)
-            #
-            # z_, y_ = Variable(z_.cuda()), Variable(y_.cuda())
-            # G_result = G(z_)
-            # D_result = D(G_result)
-            # G_train_loss = BCE_loss(D_result, y_)
-            # G_train_loss.backward()
-            # G_optimizer.step()
-            #
-            # G_losses.append(G_train_loss.data[0])
 
         print('[%d/%d]: loss_d: %.3f, loss_g: %.3f' % (
             (epoch + 1), train_epoch, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
