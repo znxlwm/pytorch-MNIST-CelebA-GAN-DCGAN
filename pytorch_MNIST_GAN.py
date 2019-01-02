@@ -47,11 +47,18 @@ class discriminator(nn.Module):
         x = F.sigmoid(self.fc4(x))
         return x
 
-fixed_z_ = torch.randn((5 * 5, 100))    # fixed noise
+# training parameters
+batch_size = 128
+lr = 0.0002
+train_epoch = 100
+PATH = './MNIST_GAN_results'
+NOISE_SIZE = 128
+
+fixed_z_ = torch.randn((5 * 5, NOISE_SIZE))    # fixed noise
 fixed_z_ = Variable(fixed_z_.cuda())
 
 def show_result(num_epoch, show = False, save = False, path = 'result.png', isFix=False):
-    z_ = torch.randn((5*5, 100))
+    z_ = torch.randn((5*5, NOISE_SIZE))
     z_ = Variable(z_.cuda())
 
     G.eval()
@@ -104,11 +111,6 @@ def show_train_hist(hist, show = False, save = False, path = 'Train_hist.png'):
     else:
         plt.close()
 
-# training parameters
-batch_size = 128
-lr = 0.0002
-train_epoch = 100
-PATH = './MNIST_GAN_results'
 # data_loader
 transform = transforms.Compose([
     transforms.ToTensor(),
@@ -120,7 +122,7 @@ train_loader = torch.utils.data.DataLoader(
     batch_size=batch_size, shuffle=True)
 
 # network
-G = generator(input_size=100, output_size=28*28).cuda()
+G = generator(input_size=NOISE_SIZE, output_size=28*28).cuda()
 D = discriminator(input_size=28*28, n_class=1).cuda()
 
 # Binary Cross Entropy loss
@@ -153,7 +155,7 @@ def train_discriminator(input,mini_batch_size):
     D_real_loss = BCE_loss(D_real_result, y_real)
 
     # Calculate loss for generated sample
-    z = torch.randn((mini_batch_size, 100))
+    z = torch.randn((mini_batch_size, NOISE_SIZE))
     z = Variable(z.cuda())
     G_result = G(z) # Generator's result
 
@@ -172,7 +174,7 @@ def train_generator(mini_batch_size):
     G.zero_grad()
 
     # Generate z with random values
-    z = torch.randn((mini_batch_size, 100))
+    z = torch.randn((mini_batch_size, NOISE_SIZE))
     y = torch.ones(mini_batch_size)     # Attempting to be real
     z, y = Variable(z.cuda()), Variable(y.cuda())
 
