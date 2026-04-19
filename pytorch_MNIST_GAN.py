@@ -1,14 +1,16 @@
 import os
+import glob
 import matplotlib.pyplot as plt
 import itertools
 import pickle
-import imageio
+import imageio.v2 as imageio
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
+from torch.utils.tensorboard import SummaryWriter
 
 # G(z)
 class generator(nn.Module):
@@ -25,7 +27,7 @@ class generator(nn.Module):
         x = F.leaky_relu(self.fc1(input), 0.2)
         x = F.leaky_relu(self.fc2(x), 0.2)
         x = F.leaky_relu(self.fc3(x), 0.2)
-        x = F.tanh(self.fc4(x))
+        x = torch.tanh(self.fc4(x)) # 修改：F.tanh -> torch.tanh
 
         return x
 
@@ -46,21 +48,22 @@ class discriminator(nn.Module):
         x = F.dropout(x, 0.3)
         x = F.leaky_relu(self.fc3(x), 0.2)
         x = F.dropout(x, 0.3)
-        x = F.sigmoid(self.fc4(x))
+        x = torch.sigmoid(self.fc4(x)) # 修改：F.sigmoid -> torch.sigmoid
 
         return x
 
-fixed_z_ = torch.randn((5 * 5, 100))    # fixed noise
-fixed_z_ = Variable(fixed_z_.cuda(), volatile=True)
+fixed_z_ = torch.randn((5 * 5, 100)).cuda()    # 修改：移除 volatile=True，直接放 gpu
+
 def show_result(num_epoch, show = False, save = False, path = 'result.png', isFix=False):
-    z_ = torch.randn((5*5, 100))
-    z_ = Variable(z_.cuda(), volatile=True)
+    z_ = torch.randn((5*5, 100)).cuda() # 修改：移除 volatile=True
 
     G.eval()
-    if isFix:
-        test_images = G(fixed_z_)
-    else:
-        test_images = G(z_)
+    # 修改：使用 torch.no_grad() 替代 volatile=True
+    with torch.no_grad():
+        if isFix:
+            test_images = G(fixed_z_)
+        else:
+            test_images = G(z_)
     G.train()
 
     size_figure_grid = 5
@@ -108,15 +111,66 @@ def show_train_hist(hist, show = False, save = False, path = 'Train_hist.png'):
     else:
         plt.close()
 
+def save_checkpoint(epoch, G, D, G_optimizer, D_optimizer, train_hist, save_dir, is_best=False):
+    checkpoint = {
+        'epoch': epoch,
+        'G_state_dict': G.state_dict(),
+        'D_state_dict': D.state_dict(),
+        'G_optimizer_state_dict': G_optimizer.state_dict(),
+        'D_optimizer_state_dict': D_optimizer.state_dict(),
+        'train_hist': train_hist
+    }
+    checkpoint_path = os.path.join(save_dir, f'checkpoint_epoch_{epoch}.pth')
+    torch.save(checkpoint, checkpoint_path)
+    
+    if is_best:
+        best_path = os.path.join(save_dir, 'checkpoint_best.pth')
+        torch.save(checkpoint, best_path)
+    
+    print(f"Checkpoint saved: {checkpoint_path}")
+    return checkpoint_path
+
+def load_checkpoint(G, D, G_optimizer, D_optimizer, load_dir, epoch=None):
+    if epoch is not None:
+        checkpoint_path = os.path.join(load_dir, f'checkpoint_epoch_{epoch}.pth')
+    else:
+        checkpoints = glob.glob(os.path.join(load_dir, 'checkpoint_epoch_*.pth'))
+        if not checkpoints:
+            print("No checkpoints found, starting training from scratch.")
+            return 0, None
+        checkpoint_path = max(checkpoints, key=os.path.getctime)
+    
+    if not os.path.exists(checkpoint_path):
+        print(f"Checkpoint not found: {checkpoint_path}, starting training from scratch.")
+        return 0, None
+    
+    checkpoint = torch.load(checkpoint_path, map_location='cuda')
+    G.load_state_dict(checkpoint['G_state_dict'])
+    D.load_state_dict(checkpoint['D_state_dict'])
+    G_optimizer.load_state_dict(checkpoint['G_optimizer_state_dict'])
+    D_optimizer.load_state_dict(checkpoint['D_optimizer_state_dict'])
+    
+    start_epoch = checkpoint['epoch']
+    train_hist = checkpoint.get('train_hist', None)
+    
+    print(f"Checkpoint loaded: {checkpoint_path}")
+    print(f"Resuming training from epoch {start_epoch + 1}")
+    
+    return start_epoch, train_hist
+
 # training parameters
 batch_size = 128
 lr = 0.0002
-train_epoch = 100
+train_epoch = 20
+resume_training = True
+checkpoint_dir = 'MNIST_GAN_results/checkpoints'
+tensorboard_log_dir = 'MNIST_GAN_results/tensorboard_logs'
+checkpoint_save_interval = 1
 
 # data_loader
 transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+        transforms.Normalize(mean=[0.5], std=[0.5])
 ])
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('data', train=True, download=True, transform=transform),
@@ -142,11 +196,30 @@ if not os.path.isdir('MNIST_GAN_results/Random_results'):
     os.mkdir('MNIST_GAN_results/Random_results')
 if not os.path.isdir('MNIST_GAN_results/Fixed_results'):
     os.mkdir('MNIST_GAN_results/Fixed_results')
+if not os.path.isdir(checkpoint_dir):
+    os.mkdir(checkpoint_dir)
+if not os.path.isdir(tensorboard_log_dir):
+    os.mkdir(tensorboard_log_dir)
 
+# TensorBoard writer
+writer = SummaryWriter(log_dir=tensorboard_log_dir)
+
+# Load checkpoint if resume training
+start_epoch = 0
 train_hist = {}
 train_hist['D_losses'] = []
 train_hist['G_losses'] = []
-for epoch in range(train_epoch):
+
+if resume_training:
+    loaded_epoch, loaded_hist = load_checkpoint(G, D, G_optimizer, D_optimizer, checkpoint_dir)
+    if loaded_epoch > 0:
+        start_epoch = loaded_epoch
+        if loaded_hist is not None:
+            train_hist = loaded_hist
+
+print(f"Starting training from epoch {start_epoch + 1}")
+for epoch in range(start_epoch, train_epoch):
+    current_epoch = epoch + 1
     D_losses = []
     G_losses = []
     for x_, _ in train_loader:
@@ -157,8 +230,8 @@ for epoch in range(train_epoch):
 
         mini_batch = x_.size()[0]
 
-        y_real_ = torch.ones(mini_batch)
-        y_fake_ = torch.zeros(mini_batch)
+        y_real_ = torch.ones((mini_batch, 1))
+        y_fake_ = torch.zeros((mini_batch, 1))
 
         x_, y_real_, y_fake_ = Variable(x_.cuda()), Variable(y_real_.cuda()), Variable(y_fake_.cuda())
         D_result = D(x_)
@@ -178,13 +251,13 @@ for epoch in range(train_epoch):
         D_train_loss.backward()
         D_optimizer.step()
 
-        D_losses.append(D_train_loss.data[0])
+        D_losses.append(D_train_loss.item())
 
         # train generator G
         G.zero_grad()
 
         z_ = torch.randn((mini_batch, 100))
-        y_ = torch.ones(mini_batch)
+        y_ = torch.ones((mini_batch, 1))
 
         z_, y_ = Variable(z_.cuda()), Variable(y_.cuda())
         G_result = G(z_)
@@ -193,16 +266,47 @@ for epoch in range(train_epoch):
         G_train_loss.backward()
         G_optimizer.step()
 
-        G_losses.append(G_train_loss.data[0])
+        G_losses.append(G_train_loss.item())
 
+    avg_D_loss = torch.mean(torch.FloatTensor(D_losses))
+    avg_G_loss = torch.mean(torch.FloatTensor(G_losses))
+    
     print('[%d/%d]: loss_d: %.3f, loss_g: %.3f' % (
-        (epoch + 1), train_epoch, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
-    p = 'MNIST_GAN_results/Random_results/MNIST_GAN_' + str(epoch + 1) + '.png'
-    fixed_p = 'MNIST_GAN_results/Fixed_results/MNIST_GAN_' + str(epoch + 1) + '.png'
-    show_result((epoch+1), save=True, path=p, isFix=False)
-    show_result((epoch+1), save=True, path=fixed_p, isFix=True)
-    train_hist['D_losses'].append(torch.mean(torch.FloatTensor(D_losses)))
-    train_hist['G_losses'].append(torch.mean(torch.FloatTensor(G_losses)))
+        current_epoch, train_epoch, avg_D_loss, avg_G_loss))
+    
+    # TensorBoard logging
+    writer.add_scalar('Loss/Discriminator', avg_D_loss, current_epoch)
+    writer.add_scalar('Loss/Generator', avg_G_loss, current_epoch)
+    writer.add_scalars('Loss/Combined', {
+        'Discriminator': avg_D_loss,
+        'Generator': avg_G_loss
+    }, current_epoch)
+    
+    # Generate and log images to TensorBoard
+    G.eval()
+    with torch.no_grad():
+        fixed_images = G(fixed_z_)
+        fixed_images = fixed_images.view(-1, 1, 28, 28)
+        fixed_images = (fixed_images + 1) / 2
+        writer.add_images('Generated/Fixed_Noise', fixed_images, current_epoch)
+        
+        random_z = torch.randn((25, 100)).cuda()
+        random_images = G(random_z)
+        random_images = random_images.view(-1, 1, 28, 28)
+        random_images = (random_images + 1) / 2
+        writer.add_images('Generated/Random_Noise', random_images, current_epoch)
+    G.train()
+    
+    p = 'MNIST_GAN_results/Random_results/MNIST_GAN_' + str(current_epoch) + '.png'
+    fixed_p = 'MNIST_GAN_results/Fixed_results/MNIST_GAN_' + str(current_epoch) + '.png'
+    show_result(current_epoch, save=True, path=p, isFix=False)
+    show_result(current_epoch, save=True, path=fixed_p, isFix=True)
+    train_hist['D_losses'].append(avg_D_loss)
+    train_hist['G_losses'].append(avg_G_loss)
+    
+    # Save checkpoint
+    if current_epoch % checkpoint_save_interval == 0:
+        save_checkpoint(current_epoch, G, D, G_optimizer, D_optimizer, train_hist, checkpoint_dir)
 
 
 print("Training finish!... save training results")
@@ -213,8 +317,14 @@ with open('MNIST_GAN_results/train_hist.pkl', 'wb') as f:
 
 show_train_hist(train_hist, save=True, path='MNIST_GAN_results/MNIST_GAN_train_hist.png')
 
+# Close TensorBoard writer
+writer.close()
+print("TensorBoard writer closed.")
+
 images = []
 for e in range(train_epoch):
     img_name = 'MNIST_GAN_results/Fixed_results/MNIST_GAN_' + str(e + 1) + '.png'
-    images.append(imageio.imread(img_name))
-imageio.mimsave('MNIST_GAN_results/generation_animation.gif', images, fps=5)
+    if os.path.exists(img_name):
+        images.append(imageio.imread(img_name))
+if images:
+    imageio.mimsave('MNIST_GAN_results/generation_animation.gif', images, fps=5)
