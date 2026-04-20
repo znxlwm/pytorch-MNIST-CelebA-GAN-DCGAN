@@ -8,23 +8,21 @@ import imageio
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.autograd import Variable
 
 from data_loader import get_data_loader, get_dataset_config
 from models import Generator, Discriminator
 
-fixed_z_ = torch.randn((5 * 5, 100)).view(-1, 100, 1, 1)
-fixed_z_ = Variable(fixed_z_.cuda(), volatile=True)
+fixed_z_ = torch.randn((5 * 5, 100)).view(-1, 100, 1, 1).cuda()
 
 def show_result(G, num_epoch, dataset_config, show=False, save=False, path='result.png', isFix=False):
-    z_ = torch.randn((5*5, 100)).view(-1, 100, 1, 1)
-    z_ = Variable(z_.cuda(), volatile=True)
+    z_ = torch.randn((5*5, 100)).view(-1, 100, 1, 1).cuda()
 
     G.eval()
-    if isFix:
-        test_images = G(fixed_z_)
-    else:
-        test_images = G(z_)
+    with torch.no_grad():
+        if isFix:
+            test_images = G(fixed_z_)
+        else:
+            test_images = G(z_)
     G.train()
 
     size_figure_grid = 5
@@ -168,15 +166,14 @@ def main():
 
             mini_batch = x_.size()[0]
 
-            y_real_ = torch.ones(mini_batch)
-            y_fake_ = torch.zeros(mini_batch)
-
-            x_, y_real_, y_fake_ = Variable(x_.cuda()), Variable(y_real_.cuda()), Variable(y_fake_.cuda())
+            y_real_ = torch.ones(mini_batch).cuda()
+            y_fake_ = torch.zeros(mini_batch).cuda()
+            x_ = x_.cuda()
+            
             D_result = D(x_).squeeze()
             D_real_loss = BCE_loss(D_result, y_real_)
 
-            z_ = torch.randn((mini_batch, 100)).view(-1, 100, 1, 1)
-            z_ = Variable(z_.cuda())
+            z_ = torch.randn((mini_batch, 100)).view(-1, 100, 1, 1).cuda()
             G_result = G(z_)
 
             D_result = D(G_result).squeeze()
@@ -186,12 +183,11 @@ def main():
             D_train_loss.backward()
             D_optimizer.step()
 
-            D_losses.append(D_train_loss.data[0])
+            D_losses.append(D_train_loss.item())
 
             G.zero_grad()
 
-            z_ = torch.randn((mini_batch, 100)).view(-1, 100, 1, 1)
-            z_ = Variable(z_.cuda())
+            z_ = torch.randn((mini_batch, 100)).view(-1, 100, 1, 1).cuda()
 
             G_result = G(z_)
             D_result = D(G_result).squeeze()
@@ -199,7 +195,7 @@ def main():
             G_train_loss.backward()
             G_optimizer.step()
 
-            G_losses.append(G_train_loss.data[0])
+            G_losses.append(G_train_loss.item())
 
             num_iter += 1
 
